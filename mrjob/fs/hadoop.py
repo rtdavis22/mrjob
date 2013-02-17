@@ -167,25 +167,22 @@ class HadoopFilesystem(Filesystem):
 
     def _cat_file(self, filename):
         # stream from HDFS
-        cat_args = self._hadoop_bin + ['fs', '-cat', filename]
+        cat_args = self._hadoop_bin + ['fs', '-text', filename]
         log.debug('> %s' % cmd_line(cat_args))
 
         cat_proc = Popen(cat_args, stdout=PIPE, stderr=PIPE)
 
-        def stream():
-            for line in cat_proc.stdout:
-                yield line
+        for line in cat_proc.stdout:
+            yield line
 
-            # there shouldn't be any stderr
-            for line in cat_proc.stderr:
-                log.error('STDERR: ' + line)
+        # there shouldn't be any stderr
+        for line in cat_proc.stderr:
+            log.error('STDERR: ' + line)
 
-            returncode = cat_proc.wait()
+        returncode = cat_proc.wait()
 
-            if returncode != 0:
-                raise IOError("Could not stream %s" % filename)
-
-        return read_file(filename, stream())
+        if returncode != 0:
+            raise IOError("Could not stream %s" % filename)
 
     def mkdir(self, path):
         try:
